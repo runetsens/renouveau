@@ -98,5 +98,5 @@ root@vbox:~# lvs
    home   vbox-vg -wi-ao---- <11,76g                                                    
   root   vbox-vg -wi-ao----  <6,81g                                                    
   swap_1 vbox-vg -wi-ao---- 976,00m                                                    
-root@vbox:~# 
+
 
