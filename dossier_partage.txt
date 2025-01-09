@@ -61,7 +61,8 @@ foreach ($Folder in $Folders) {
     icacls $FolderPath /inheritance:d
 
     # Configurer les permissions
-    icacls $FolderPath /grant "$Domain\$UserName:(OI)(CI)F"  # Donne Full Control à l'utilisateur
-    icacls $FolderPath /grant "Administrators:(OI)(CI)F"     # Donne Full Control aux administrateurs
-    icacls $FolderPath /grant "SYSTEM:(OI)(CI)F"             # Donne Full Control au système
+    icacls $FolderPath /remove "Users"                                 # Supprime les permissions pour le groupe Users
+    icacls $FolderPath /grant "${Domain}\${UserName}:(OI)(CI)F"        # Donne Full Control à l'utilisateur
+    icacls $FolderPath /grant "Administrators:(OI)(CI)F"               # Donne Full Control aux administrateurs
+    icacls $FolderPath /grant "SYSTEM:(OI)(CI)F"                       # Donne Full Control au système
 }
