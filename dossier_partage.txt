@@ -34,3 +34,34 @@ foreach ($user in $users) {
     Set-Acl -Path $userFolder -AclObject $acl
 }
 Write-Host "Dossiers créés et permissions attribuées avec succès."
+
+
+
+
+
+
+
+permission
+
+# Variables
+$BasePath = "I:\Individuel"  # Chemin du dossier racine
+$Domain = "BILLU"            # Nom du domaine Active Directory
+
+# Récupérer tous les sous-dossiers
+$Folders = Get-ChildItem -Path $BasePath -Directory
+
+# Appliquer les permissions
+foreach ($Folder in $Folders) {
+    $UserName = $Folder.Name  # Le nom du dossier est le même que le nom d'utilisateur
+    $FolderPath = Join-Path $BasePath $UserName
+
+    Write-Host "Configuration des permissions pour $UserName dans $FolderPath"
+
+    # Désactiver l'héritage
+    icacls $FolderPath /inheritance:d
+
+    # Configurer les permissions
+    icacls $FolderPath /grant "$Domain\$UserName:(OI)(CI)F"  # Donne Full Control à l'utilisateur
+    icacls $FolderPath /grant "Administrators:(OI)(CI)F"     # Donne Full Control aux administrateurs
+    icacls $FolderPath /grant "SYSTEM:(OI)(CI)F"             # Donne Full Control au système
+}
