@@ -1,0 +1,36 @@
+$basePath = "D:\individuelle"  # Remplacez par le chemin de votre disque ou dossier
+$users = Get-ADUser -Filter *  # Récupère tous les utilisateurs d'Active Directory
+# Créer un dossier pour chaque utilisateur et configurer les permissions
+foreach ($user in $users) {
+    # Nom du dossier utilisateur
+    $userFolder = "$basePath\$($user.SamAccountName)"
+    # Créer le dossier si il n'existe pas
+    if (-not (Test-Path $userFolder)) {
+        New-Item -Path $userFolder -ItemType Directory
+    }
+    # Récupérer le nom d'utilisateur (SamAccountName)
+    $userName = $user.SamAccountName
+    # Obtenir les ACL actuelles du dossier
+    $acl = Get-Acl $userFolder
+    # Créer une règle de permission pour l'utilisateur
+    $permission = "$userName"
+    $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+        $permission,
+        "Modify",                    # Permissions à accorder (ici : Modifier)
+        "ContainerInherit,ObjectInherit",  # Héritage des permissions
+        "None",                        # Pas de propagation
+        "Allow"                        # Autoriser
+    )
+    # Ajouter la règle d'accès
+    $acl.AddAccessRule($rule)
+    # Appliquer les permissions modifiées
+    Set-Acl -Path $userFolder -AclObject $acl
+    # Restreindre l'accès aux autres utilisateurs
+    # Supprimer les permissions "Everyone" ou autres groupes/utilisateurs non autorisés
+    $acl = Get-Acl $userFolder
+    $acl.Access | Where-Object { $_.IdentityReference -eq "BUILTIN\Users" -or $_.IdentityReference -eq "Everyone" } | ForEach-Object {
+        $acl.RemoveAccessRule($_)
+    }
+    Set-Acl -Path $userFolder -AclObject $acl
+}
+Write-Host "Dossiers créés et permissions attribuées avec succès."
