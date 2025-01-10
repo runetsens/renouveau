@@ -1,0 +1,36 @@
+# Variables
+$Domain = "billu.remindme.lan"  # Nom du domaine
+
+# Charger le module Active Directory
+Import-Module ActiveDirectory
+
+# Récupérer toutes les OUs du domaine
+$OUs = Get-ADOrganizationalUnit -Filter * | Select-Object -ExpandProperty DistinguishedName
+
+# Parcourir chaque OU
+foreach ($OU in $OUs) {
+    # Extraire le nom de l'OU
+    $OUName = (Get-ADOrganizationalUnit -Identity $OU).Name
+    $GroupName = "${OUName}_Group"  # Nom du groupe basé sur l'OU
+
+    Write-Host "Traitement de l'OU : $OUName"
+
+    # Récupérer les utilisateurs dans l'OU
+    $Users = Get-ADUser -Filter * -SearchBase $OU
+
+    # Vérifier si le groupe existe déjà
+    if (-Not (Get-ADGroup -Filter {Name -eq $GroupName} -ErrorAction SilentlyContinue)) {
+        Write-Host "Création du groupe : $GroupName"
+        New-ADGroup -Name $GroupName -SamAccountName $GroupName -GroupScope Global -Path $OU -Description "Groupe pour les utilisateurs de l'OU $OUName"
+    } else {
+        Write-Host "Le groupe $GroupName existe déjà."
+    }
+
+    # Ajouter les utilisateurs au groupe
+    foreach ($User in $Users) {
+        Write-Host "Ajout de l'utilisateur $($User.SamAccountName) au groupe $GroupName"
+        Add-ADGroupMember -Identity $GroupName -Members $User.SamAccountName -ErrorAction SilentlyContinue
+    }
+}
+
+Write-Host "Processus terminé. Tous les utilisateurs sont regroupés dans les groupes correspondants à leurs OUs."
