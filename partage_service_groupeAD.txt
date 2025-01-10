@@ -1,0 +1,38 @@
+# Variables
+$BasePath = "J:\Services"  # Chemin où les dossiers des groupes seront créés
+$Domain = "BILLU"              # Nom du domaine Active Directory
+
+# Charger le module Active Directory
+Import-Module ActiveDirectory
+
+# Récupérer tous les groupes AD du domaine
+$Groups = Get-ADGroup -Filter * | Where-Object { (Get-ADGroupMember $_.SamAccountName).Count -gt 0 } | Select-Object -ExpandProperty SamAccountName
+
+
+# Vérifie si le chemin de base existe, sinon le crée
+if (-Not (Test-Path -Path $BasePath)) {
+    Write-Host "Création du dossier racine : $BasePath"
+    New-Item -Path $BasePath -ItemType Directory
+}
+
+# Traitement pour chaque groupe
+foreach ($Group in $Groups) {
+    $GroupFolderPath = Join-Path $BasePath $Group  # Dossier correspondant au groupe
+
+    # Créer le dossier s'il n'existe pas
+    if (-Not (Test-Path -Path $GroupFolderPath)) {
+        Write-Host "Création du dossier pour le groupe : $Group"
+        New-Item -Path $GroupFolderPath -ItemType Directory
+    }
+
+    # Désactiver l'héritage et supprimer les permissions existantes
+    Write-Host "Configuration des permissions pour le groupe : $Group"
+    icacls $GroupFolderPath /inheritance:d
+
+    # Ajouter les permissions pour le groupe
+    icacls $GroupFolderPath /grant "${Domain}\${Group}:(OI)(CI)F"  # Full Control pour le groupe
+    icacls $GroupFolderPath /grant "Administrators:(OI)(CI)F"       # Full Control pour les administrateurs
+    icacls $GroupFolderPath /grant "SYSTEM:(OI)(CI)F"               # Full Control pour le système
+}
+
+Write-Host "Configuration terminée. Vérifiez les dossiers et permissions."
