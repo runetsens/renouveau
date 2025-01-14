@@ -1,0 +1,44 @@
+# Configuration des variables
+$OU_Users = "OU=Utilisateurs,DC=entreprise,DC=lan" # Remplacez par votre OU d'utilisateurs
+$Group_Bypass = "bypass" # Nom du groupe d'exception
+$PlageHoraire = "7:30-20:00" # Format horaire autorisé
+
+# Fonction pour définir les restrictions horaires
+function Set-LogonHours {
+    param (
+        [string]$Plage,
+        [string]$SamediDimanche = "Closed"
+    )
+    # Conversion de la plage horaire en format binaire pour AD
+    # "7:30-20:00" traduit en binaire sur les jours de la semaine
+    $BinaryHours = @(
+        "011111111111111111100000", # Lundi
+        "011111111111111111100000", # Mardi
+        "011111111111111111100000", # Mercredi
+        "011111111111111111100000", # Jeudi
+        "011111111111111111100000", # Vendredi
+        "011111111111111111100000", # Samedi
+        "000000000000000000000000"  # Dimanche
+    )
+    return $BinaryHours
+}
+
+# Récupérer les utilisateurs standards
+$Users = Get-ADUser -Filter * -SearchBase $OU_Users -Properties LogonHours
+
+foreach ($User in $Users) {
+    $UserGroups = Get-ADUser -Identity $User.SamAccountName -Properties MemberOf
+
+    # Vérifie si l'utilisateur est dans le groupe "bypass" ou un administrateur
+    if ($UserGroups -contains $Group_Bypass -or $User.AdminCount -eq 1) {
+        Write-Host "Utilisateur $($User.SamAccountName) exclu des restrictions." -ForegroundColor Green
+        continue
+    }
+
+    # Appliquer les restrictions horaires
+    $LogonHours = Set-LogonHours -Plage $PlageHoraire
+    Set-ADUser -Identity $User.SamAccountName -LogonHours $LogonHours
+    Write-Host "Restrictions appliquées pour $($User.SamAccountName)." -ForegroundColor Yellow
+}
+
+Write-Host "Configuration terminée !" -ForegroundColor Cyan
