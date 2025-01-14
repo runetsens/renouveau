@@ -30,7 +30,7 @@ function Generate-LogonHours {
 $PlageHoraire = Generate-LogonHours
 
 # Récupérer les utilisateurs standards
-$Users = Get-ADUser -Filter * -SearchBase $OU_Users -Properties MemberOf
+$Users = Get-ADUser -Filter * -SearchBase $OU_Users -Properties MemberOf, LogonHours
 
 foreach ($User in $Users) {
     # Vérifie si l'utilisateur est dans le groupe "bypass" ou un administrateur
@@ -40,9 +40,19 @@ foreach ($User in $Users) {
         continue
     }
 
+    # Vérifier si les horaires sont déjà appliqués
+    if ($User.LogonHours -eq $PlageHoraire) {
+        Write-Host "Les restrictions sont déjà appliquées pour $($User.SamAccountName)." -ForegroundColor Cyan
+        continue
+    }
+
     # Appliquer les restrictions horaires
-    Set-ADUser -Identity $User.SamAccountName -Replace @{LogonHours = $PlageHoraire}
-    Write-Host "Restrictions appliquées pour $($User.SamAccountName)." -ForegroundColor Yellow
+    try {
+        Set-ADUser -Identity $User.SamAccountName -Replace @{LogonHours = $PlageHoraire}
+        Write-Host "Restrictions appliquées pour $($User.SamAccountName)." -ForegroundColor Yellow
+    } catch {
+        Write-Host "Erreur lors de l'application des restrictions pour $($User.SamAccountName) : $_" -ForegroundColor Red
+    }
 }
 
 Write-Host "Configuration terminée !" -ForegroundColor Cyan
