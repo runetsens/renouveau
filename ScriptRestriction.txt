@@ -1,18 +1,33 @@
 # Configuration des variables
 $OU_Users = "OU=Communication et Relations publiques,OU=UTILISATEUR,DC=billu,DC=remindme,DC=lan"
 $Group_Bypass = "bypass" # Nom du groupe d'exception
-$PlageHoraire = @(
-    0b01111111, # Lundi : 7h30 à 20h
-    0b01111111, # Mardi : 7h30 à 20h
-    0b01111111, # Mercredi : 7h30 à 20h
-    0b01111111, # Jeudi : 7h30 à 20h
-    0b01111111, # Vendredi : 7h30 à 20h
-    0b01111111, # Samedi : 7h30 à 20h
-    0b00000000  # Dimanche : Pas de connexion
-)
 
 # Importer le module Active Directory
 Import-Module ActiveDirectory
+
+# Fonction pour générer les horaires
+function Generate-LogonHours {
+    # Générer un tableau de 21 octets pour LogonHours
+    $hours = @(
+        127, # Lundi : 7h30 à 20h
+        127, # Mardi : 7h30 à 20h
+        127, # Mercredi : 7h30 à 20h
+        127, # Jeudi : 7h30 à 20h
+        127, # Vendredi : 7h30 à 20h
+        127, # Samedi : 7h30 à 20h
+        0    # Dimanche : Pas de connexion
+    )
+    
+    # Étendre chaque jour à 3 octets (21 octets au total)
+    $binaryArray = @()
+    foreach ($day in $hours) {
+        $binaryArray += $day, 0, 0
+    }
+    return $binaryArray
+}
+
+# Générer les plages horaires
+$PlageHoraire = Generate-LogonHours
 
 # Récupérer les utilisateurs standards
 $Users = Get-ADUser -Filter * -SearchBase $OU_Users -Properties MemberOf
