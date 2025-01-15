@@ -2,12 +2,16 @@ Function Set-LogonHours {
    [CmdletBinding()]
    Param(
       [Parameter(Mandatory=$True, ValueFromPipeline=$True, ValueFromPipelineByPropertyName=$True, Position=0)]
-      [string]$Identity,
-      [Parameter(Mandatory=$False)][string]$OU_Users = "OU=Communication et Relations publiques,OU=UTILISATEUR,DC=billu,DC=remindme,DC=lan",
-      [Parameter(Mandatory=$False)][string]$Group_Bypass = "bypass" # Nom du groupe d'exception
+      [string]$Identity,  # Identité de l'utilisateur (SamAccountName ou DN)
+
+      [Parameter(Mandatory=$False)]
+      [string]$OU_Users = "OU=Communication et Relations publiques,OU=UTILISATEUR,DC=billu,DC=remindme,DC=lan",  # OU cible
+
+      [Parameter(Mandatory=$False)]
+      [string]$Group_Bypass = "bypass"  # Groupe d'exception
    )
    Process {
-      # Vérification si l'utilisateur est dans le groupe d'exception (bypass)
+      # Vérifier si l'utilisateur est dans le groupe d'exception
       $UserGroups = (Get-ADUser -Identity $Identity -Properties MemberOf).MemberOf
       if ($UserGroups -contains "CN=$Group_Bypass,OU=Groups,DC=billu,DC=remindme,DC=lan") {
          Write-Host "Utilisateur $Identity est dans le groupe bypass. Aucune restriction appliquée." -ForegroundColor Green
@@ -17,7 +21,7 @@ Function Set-LogonHours {
       # Initialiser les 7 jours avec toutes les heures à "0" (aucun accès)
       $FullByte = New-Object "byte[]" 21
       $FullDay = [ordered]@{}
-      0..23 | foreach { $FullDay.Add($_, "0") }
+      0..23 | ForEach-Object { $FullDay.Add($_, "0") }
 
       # Définir les heures autorisées : de 7h30 à 20h
       $HoursAllowed = @("7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")
@@ -51,7 +55,7 @@ Function Set-LogonHours {
 
       # Conversion de la chaîne binaire en octets
       $i = 0
-      $BinaryResult = $FixedTimeZoneOffSet -split '(\d{8})' | Where { $_ -match '(\d{8})' }
+      $BinaryResult = $FixedTimeZoneOffSet -split '(\d{8})' | Where-Object { $_ -match '(\d{8})' }
       foreach ($singleByte in $BinaryResult) {
          $Tempvar = $singleByte.ToCharArray()
          [array]::Reverse($Tempvar)
