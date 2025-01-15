@@ -1,7 +1,8 @@
 Function Set-LogonHours {
    [CmdletBinding()]
    Param(
-      [Parameter(Mandatory=$True)][ValueFromPipeline=$True, ValueFromPipelineByPropertyName=$True, Position=0)]$Identity,
+      [Parameter(Mandatory=$True, ValueFromPipeline=$True, ValueFromPipelineByPropertyName=$True, Position=0)]
+      [string]$Identity,
       [Parameter(Mandatory=$False)][string]$OU_Users = "OU=Communication et Relations publiques,OU=UTILISATEUR,DC=billu,DC=remindme,DC=lan",
       [Parameter(Mandatory=$False)][string]$Group_Bypass = "bypass" # Nom du groupe d'exception
    )
