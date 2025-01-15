@@ -74,6 +74,6 @@ Function Set-LogonHours {
    }
 }
 
-# Application du script pour tous les utilisateurs de l'OU
-Get-ADUser -Filter * -SearchBase "OU=Communication et Relations publiques,OU=UTILISATEUR,DC=billu,DC=remindme,DC=lan" |
-   ForEach-Object { Set-LogonHours -Identity $_.SamAccountName }
+# Exemple d'utilisation
+# Remplacez "Utilisateur" par l'identité de votre utilisateur ou utilisez un pipeline pour appliquer à plusieurs utilisateurs
+Set-LogonHours -Identity "alban dumas"
