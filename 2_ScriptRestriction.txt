@@ -1,0 +1,65 @@
+Function Set-LogonHours {
+   [CmdletBinding()]
+   Param(
+      [Parameter(Mandatory=$True)][ValueFromPipeline=$True, ValueFromPipelineByPropertyName=$True, Position=0)]$Identity
+   )
+   Process {
+      # Initialiser les 7 jours avec toutes les heures à "0" (aucun accès)
+      $FullByte = New-Object "byte[]" 21
+      $FullDay = [ordered]@{}
+      0..23 | foreach { $FullDay.Add($_, "0") }
+
+      # Définir les heures autorisées : de 7h30 à 20h
+      # Heures 8h à 20h autorisées (bits 8 à 20 activés)
+      $HoursAllowed = @("7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")
+      foreach ($hour in $HoursAllowed) { $FullDay[$hour] = "1" }
+      $Working = -join ($FullDay.Values)
+
+      # Définir les jours de la semaine (Lundi à Samedi : accès autorisé, Dimanche : accès refusé)
+      $SundayValue = "000000000000000000000000"  # Dimanche : pas d'accès
+      $MondayValue = $Working                   # Lundi
+      $TuesdayValue = $Working                  # Mardi
+      $WednesdayValue = $Working                # Mercredi
+      $ThursdayValue = $Working                 # Jeudi
+      $FridayValue = $Working                   # Vendredi
+      $SaturdayValue = $Working                 # Samedi
+
+      # Concaténer tous les jours pour former la semaine complète
+      $AllTheWeek = "{0}{1}{2}{3}{4}{5}{6}" -f $SundayValue, $MondayValue, $TuesdayValue, $WednesdayValue, $ThursdayValue, $FridayValue, $SaturdayValue
+
+      # Gestion du fuseau horaire (ajuster si nécessaire)
+      if ((Get-TimeZone).BaseUtcOffset.Hours -lt 0) {
+         $TimeZoneOffset = $AllTheWeek.Substring(0, 168 + ((Get-TimeZone).BaseUtcOffset.Hours))
+         $TimeZoneOffset1 = $AllTheWeek.Substring(168 + ((Get-TimeZone).BaseUtcOffset.Hours))
+         $FixedTimeZoneOffSet = "$TimeZoneOffset1$TimeZoneOffset"
+      } elseif ((Get-TimeZone).BaseUtcOffset.Hours -gt 0) {
+         $TimeZoneOffset = $AllTheWeek.Substring(0, ((Get-TimeZone).BaseUtcOffset.Hours))
+         $TimeZoneOffset1 = $AllTheWeek.Substring(((Get-TimeZone).BaseUtcOffset.Hours))
+         $FixedTimeZoneOffSet = "$TimeZoneOffset1$TimeZoneOffset"
+      } else {
+         $FixedTimeZoneOffSet = $AllTheWeek
+      }
+
+      # Conversion de la chaîne binaire en octets
+      $i = 0
+      $BinaryResult = $FixedTimeZoneOffSet -split '(\d{8})' | Where { $_ -match '(\d{8})' }
+      foreach ($singleByte in $BinaryResult) {
+         $Tempvar = $singleByte.ToCharArray()
+         [array]::Reverse($Tempvar)
+         $Tempvar = -join $Tempvar
+         $Byte = [Convert]::ToByte($Tempvar, 2)
+         $FullByte[$i] = $Byte
+         $i++
+      }
+
+      # Appliquer les heures de connexion à l'utilisateur
+      Set-ADUser -Identity $Identity -Replace @{logonhours = $FullByte}
+   }
+   End {
+      Write-Output "Les horaires de connexion de 7h30 à 20h (Lundi-Samedi) ont été configurés pour $Identity."
+   }
+}
+
+# Exemple d'utilisation
+# Remplacez "Utilisateur" par l'identité de votre utilisateur ou utilisez un pipeline pour appliquer à plusieurs utilisateurs
+Set-LogonHours -Identity "Utilisateur"
