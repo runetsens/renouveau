@@ -1,79 +1,58 @@
-Function Set-LogonHours {
-   [CmdletBinding()]
-   Param(
-      [Parameter(Mandatory=$True, ValueFromPipeline=$True, ValueFromPipelineByPropertyName=$True, Position=0)]
-      [string]$Identity,  # Identité de l'utilisateur (SamAccountName ou DN)
+# Script pour appliquer des restrictions d'accès horaires à une OU spécifique
+# avec une exception pour les membres du groupe "bypass"
 
-      [Parameter(Mandatory=$False)]
-      [string]$OU_Users = "OU=Communication et Relations publiques,OU=UTILISATEUR,DC=billu,DC=remindme,DC=lan",  # OU cible
+# Définir les variables
+$OU_Users = "OU=Communication et Relations publiques,OU=UTILISATEUR,DC=billu,DC=remindme,DC=lan"
+$Group_Bypass = "bypass" # Nom du groupe d'exception
 
-      [Parameter(Mandatory=$False)]
-      [string]$Group_Bypass = "bypass"  # Groupe d'exception
-   )
-   Process {
-      # Vérifier si l'utilisateur est dans le groupe d'exception
-      $UserGroups = (Get-ADUser -Identity $Identity -Properties MemberOf).MemberOf
-      if ($UserGroups -contains "CN=$Group_Bypass,OU=Groups,DC=billu,DC=remindme,DC=lan") {
-         Write-Host "Utilisateur $Identity est dans le groupe bypass. Aucune restriction appliquée." -ForegroundColor Green
-         return
-      }
+# Générer les horaires pour un jour : 7h30 à 20h
+$DayHours = @("7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")
+$FullDay = @("0")*24
+foreach ($hour in $DayHours) { $FullDay[$hour] = "1" }
+$WorkingDay = -join $FullDay
 
-      # Initialiser les 7 jours avec toutes les heures à "0" (aucun accès)
-      $FullByte = New-Object "byte[]" 21
-      $FullDay = [ordered]@{}
-      0..23 | ForEach-Object { $FullDay.Add($_, "0") }
+# Créer les horaires de la semaine
+$Sunday = "0"*24    # Dimanche : pas d'accès
+$Monday = $WorkingDay
+$Tuesday = $WorkingDay
+$Wednesday = $WorkingDay
+$Thursday = $WorkingDay
+$Friday = $WorkingDay
+$Saturday = "0"*24  # Samedi : pas d'accès
 
-      # Définir les heures autorisées : de 7h30 à 20h
-      $HoursAllowed = @("7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")
-      foreach ($hour in $HoursAllowed) { $FullDay[$hour] = "1" }
-      $Working = -join ($FullDay.Values)
+# Combiner les jours pour former la semaine complète
+$AllDays = "$Sunday$Monday$Tuesday$Wednesday$Thursday$Friday$Saturday"
 
-      # Définir les jours de la semaine (Lundi à Samedi : accès autorisé, Dimanche : accès refusé)
-      $SundayValue = "000000000000000000000000"  # Dimanche : pas d'accès
-      $MondayValue = $Working                   # Lundi
-      $TuesdayValue = $Working                  # Mardi
-      $WednesdayValue = $Working                # Mercredi
-      $ThursdayValue = $Working                 # Jeudi
-      $FridayValue = $Working                   # Vendredi
-      $SaturdayValue = $Working                 # Samedi
-
-      # Concaténer tous les jours pour former la semaine complète
-      $AllTheWeek = "{0}{1}{2}{3}{4}{5}{6}" -f $SundayValue, $MondayValue, $TuesdayValue, $WednesdayValue, $ThursdayValue, $FridayValue, $SaturdayValue
-
-      # Gestion du fuseau horaire (ajuster si nécessaire)
-      if ((Get-TimeZone).BaseUtcOffset.Hours -lt 0) {
-         $TimeZoneOffset = $AllTheWeek.Substring(0, 168 + ((Get-TimeZone).BaseUtcOffset.Hours))
-         $TimeZoneOffset1 = $AllTheWeek.Substring(168 + ((Get-TimeZone).BaseUtcOffset.Hours))
-         $FixedTimeZoneOffSet = "$TimeZoneOffset1$TimeZoneOffset"
-      } elseif ((Get-TimeZone).BaseUtcOffset.Hours -gt 0) {
-         $TimeZoneOffset = $AllTheWeek.Substring(0, ((Get-TimeZone).BaseUtcOffset.Hours))
-         $TimeZoneOffset1 = $AllTheWeek.Substring(((Get-TimeZone).BaseUtcOffset.Hours))
-         $FixedTimeZoneOffSet = "$TimeZoneOffset1$TimeZoneOffset"
-      } else {
-         $FixedTimeZoneOffSet = $AllTheWeek
-      }
-
-      # Conversion de la chaîne binaire en octets
-      $i = 0
-      $BinaryResult = $FixedTimeZoneOffSet -split '(\d{8})' | Where-Object { $_ -match '(\d{8})' }
-      foreach ($singleByte in $BinaryResult) {
-         $Tempvar = $singleByte.ToCharArray()
-         [array]::Reverse($Tempvar)
-         $Tempvar = -join $Tempvar
-         $Byte = [Convert]::ToByte($Tempvar, 2)
-         $FullByte[$i] = $Byte
-         $i++
-      }
-
-      # Appliquer les heures de connexion à l'utilisateur
-      Set-ADUser -Identity $Identity -Replace @{logonhours = $FullByte}
-      Write-Host "Les restrictions ont été appliquées pour l'utilisateur $Identity." -ForegroundColor Yellow
-   }
-   End {
-      Write-Output "Configuration terminée pour tous les utilisateurs."
-   }
+# Diviser la chaîne binaire en blocs de 8 bits et convertir en octets
+$BinaryResult = $AllDays -split '(\d{8})' | Where-Object { $_ -match '(\d{8})' }
+$LogonHours = New-Object "byte[]" 21
+$i = 0
+foreach ($byte in $BinaryResult) {
+    $TempVar = $byte.ToCharArray()
+    [array]::Reverse($TempVar)
+    $LogonHours[$i] = [Convert]::ToByte((-join $TempVar), 2)
+    $i++
 }
 
-# Exemple d'utilisation
-# Remplacez "Utilisateur" par l'identité de votre utilisateur ou utilisez un pipeline pour appliquer à plusieurs utilisateurs
-Set-LogonHours -Identity "alban dumas"
+# Récupérer la liste des membres du groupe "bypass"
+$BypassMembers = Get-ADGroupMember -Identity $Group_Bypass | Select-Object -ExpandProperty SamAccountName
+
+# Appliquer les restrictions horaires aux utilisateurs de l'OU
+Get-ADUser -Filter * -SearchBase $OU_Users -Properties SamAccountName | ForEach-Object {
+    $User = $_.SamAccountName
+
+    # Vérifier si l'utilisateur est dans le groupe "bypass"
+    if ($BypassMembers -contains $User) {
+        Write-Host "Utilisateur $User est dans le groupe bypass. Aucune restriction appliquée." -ForegroundColor Yellow
+    } else {
+        try {
+            # Appliquer les restrictions horaires
+            Set-ADUser -Identity $User -Replace @{logonhours = $LogonHours}
+            Write-Host "Restrictions appliquées avec succès à l'utilisateur : $User" -ForegroundColor Green
+        } catch {
+            Write-Host "Erreur lors de l'application des restrictions à l'utilisateur : $User. $_" -ForegroundColor Red
+        }
+    }
+}
+
+Write-Host "Configuration terminée pour tous les utilisateurs de l'OU : $OU_Users." -ForegroundColor Cyan
