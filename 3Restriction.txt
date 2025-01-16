@@ -1,0 +1,33 @@
+# Générer les horaires pour un jour : 7h30 à 20h
+$DayHours = @("7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20")
+$FullDay = @("0")*24
+foreach ($hour in $DayHours) { $FullDay[$hour] = "1" }
+$WorkingDay = -join $FullDay
+
+# Créer les horaires de la semaine
+$Sunday = "0"*24    # Dimanche : pas d'accès
+$Monday = $WorkingDay
+$Tuesday = $WorkingDay
+$Wednesday = $WorkingDay
+$Thursday = $WorkingDay
+$Friday = $WorkingDay
+$Saturday = "0"*24  # Samedi : pas d'accès
+
+# Combiner les jours pour former la semaine complète
+$AllDays = "$Sunday$Monday$Tuesday$Wednesday$Thursday$Friday$Saturday"
+
+# Diviser la chaîne binaire en blocs de 8 bits et convertir en octets
+$BinaryResult = $AllDays -split '(\d{8})' | Where-Object { $_ -match '(\d{8})' }
+$LogonHours = New-Object "byte[]" 21
+$i = 0
+foreach ($byte in $BinaryResult) {
+    $TempVar = $byte.ToCharArray()
+    [array]::Reverse($TempVar)
+    $LogonHours[$i] = [Convert]::ToByte((-join $TempVar), 2)
+    $i++
+}
+
+# Appliquer les horaires à l'utilisateur
+Set-ADUser -Identity "NomUtilisateur" -Replace @{logonhours = $LogonHours}
+
+Write-Host "Les horaires ont été mis à jour pour l'utilisateur 'NomUtilisateur'." -ForegroundColor Green
