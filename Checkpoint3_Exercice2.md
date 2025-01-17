@@ -75,3 +75,6 @@ Q.2.6.1 Lister les 10 derniers échecs de connexion ayant eu lieu sur le serveur
 
     La date et l'heure de la tentative
     L'adresse IP de la machine ayant fait la tentative
+
+    ![Capture d’écran du 2025-01-17 10-59-21](https://github.com/user-attachments/assets/ec716068-dbd9-4b4f-974b-0f409ad41bd9)
+
