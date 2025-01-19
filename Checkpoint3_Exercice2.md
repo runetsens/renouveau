@@ -47,7 +47,8 @@ Q.2.3.1 Quels sont les systèmes de fichiers actuellement montés ?
 
 
 Q.2.3.2 Quel type de système de stockage ils utilisent ?
-raid
+
+raid et lvm
 
 Q.2.3.3 Ajouter un nouveau disque de 8,00 Gio au serveur et réparer le volume RAID
 
