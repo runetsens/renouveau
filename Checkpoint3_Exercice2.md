@@ -31,7 +31,11 @@ Q.2.2.3 Mettre en place une authentification par clé valide et désactiver l'au
 sur le pc qui veut accedé au serveur il faut creer une clé public et privé
 
 
-![Capture d’écran du 2025-01-17 09-59-00](https://github.com/user-attachments/assets/bb61dc38-4345-49a1-bf60-26bb5e14296d)
+![Capture d’écran du 2025-01-19 14-19-51](https://github.com/user-attachments/assets/7250d0f4-a8f2-418a-901a-94c484603a1c)
+
+
+![Capture d’écran du 2025-01-19 14-23-39](https://github.com/user-attachments/assets/f8e7fe7a-fee7-4a35-ade8-3e81f0699b52)
+
 
 # Partie 3 : Analyse du stockage
 
@@ -102,6 +106,7 @@ Rappel : Bareos utilise les ports TCP 9101 à 9103 pour la communication entre s
 
 Q.2.6.1 Lister les 10 derniers échecs de connexion ayant eu lieu sur le serveur en indiquant pour chacun :
 
-![Capture d’écran du 2025-01-17 10-59-21](https://github.com/user-attachments/assets/0999e984-508d-4abb-92ec-613cb7954b9d)
+![Capture d’écran du 2025-01-19 12-53-05](https://github.com/user-attachments/assets/bde603ff-f8fd-4586-ba23-39cd450e2729)
+
 
    
