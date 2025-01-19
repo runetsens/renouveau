@@ -52,6 +52,9 @@ raid et lvm
 
 Q.2.3.3 Ajouter un nouveau disque de 8,00 Gio au serveur et réparer le volume RAID
 
+![Capture d’écran du 2025-01-19 22-50-51](https://github.com/user-attachments/assets/d87a6d66-d252-4cf3-9a99-85a85db3a5b1)
+
+
 Q.2.3.4 Ajouter un nouveau volume logique LVM de 2 Gio qui servira à héberger des sauvegardes. Ce volume doit être monté automatiquement à chaque démarrage dans l'emplacement par défaut : /var/lib/bareos/storage.
 
 Q.2.3.5 Combien d'espace disponible reste-t-il dans le groupe de volume ?
