@@ -42,7 +42,8 @@ sur le pc qui veut accedé au serveur il faut creer une clé public et privé
 Q.2.3.1 Quels sont les systèmes de fichiers actuellement montés ?
 
 
-![Capture d’écran du 2025-01-17 10-07-34](https://github.com/user-attachments/assets/efd25532-3bb0-4333-bf78-d0ad79869d6b)
+![Capture d’écran du 2025-01-19 14-32-31](https://github.com/user-attachments/assets/812a507a-92e6-45ee-a848-48e844d62d28)
+
 
 
 Q.2.3.2 Quel type de système de stockage ils utilisent ?
