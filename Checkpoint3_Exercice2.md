@@ -106,14 +106,19 @@ autorise le ping icmp en ipv4 et ipv6
 
 autorise les connexion ssh
 
+autorise également les connexions déjà établies : ct state established, related accept
+
 Q.2.5.3 Quels types sont interdit ?
 
 
-tout est bloqué
+tout ce qui n'est pas explicitement accèpté est interdit
 
 Q.2.5.4 Sur nftables, ajouter les règles nécessaires pour autoriser bareos à communiquer avec les clients bareos potentiellement présents sur l'ensemble des machines du réseau local sur lequel se trouve le serveur.
 
 Rappel : Bareos utilise les ports TCP 9101 à 9103 pour la communication entre ses différents composants.
+
+![Capture d’écran du 2025-01-20 11-53-40](https://github.com/user-attachments/assets/525ed332-ada5-4af0-b625-b6d23deda5cc)
+
 
 # Partie 6 : Analyse de logs
 
