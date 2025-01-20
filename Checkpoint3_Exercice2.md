@@ -57,7 +57,15 @@ Q.2.3.3 Ajouter un nouveau disque de 8,00 Gio au serveur et réparer le volume R
 
 Q.2.3.4 Ajouter un nouveau volume logique LVM de 2 Gio qui servira à héberger des sauvegardes. Ce volume doit être monté automatiquement à chaque démarrage dans l'emplacement par défaut : /var/lib/bareos/storage.
 
+![image](https://github.com/user-attachments/assets/3b3edf5c-279a-497c-9eed-1dfc687206d2)
+
+
 Q.2.3.5 Combien d'espace disponible reste-t-il dans le groupe de volume ?
+
+1,79g
+
+![image](https://github.com/user-attachments/assets/1261928c-5ab4-4596-88f7-6a52f9b88664)
+
 
 # Partie 4 : Sauvegardes
 
